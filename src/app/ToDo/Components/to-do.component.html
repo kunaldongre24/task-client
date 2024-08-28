@@ -1,0 +1,119 @@
+<div class="container mt-4" style="max-width: 800px">
+  <h2 class="mb-4">My Tasks:</h2>
+
+  <!-- Error Message -->
+  <div
+    *ngIf="todoError?.message"
+    class="alert alert-danger alert-dismissible fade show"
+    role="alert"
+  >
+    <div>Some error occurred. Please try again.</div>
+    <button
+      type="button"
+      class="btn-close"
+      data-bs-dismiss="alert"
+      aria-label="Close"
+    ></button>
+  </div>
+
+  <!-- ToDo List Table -->
+  <table class="table table-dark table-striped table-responsive my-4">
+    <thead>
+      <tr>
+        <th scope="col">#</th>
+        <th scope="col">Name</th>
+        <th scope="col">Description</th>
+        <th scope="col">Due Date</th>
+        <th scope="col">Priority</th>
+        <th scope="col">Completed?</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let todo of ToDoList; let i = index">
+        <th scope="row">{{ i + 1 }}</th>
+        <td>{{ todo.title }}</td>
+        <td>{{ todo.description }}</td>
+        <td>{{ formatDate(todo.dueDate) }}</td>
+        <td>{{ todo.priority }}</td>
+        <td>{{ todo.isCompleted ? "Yes" : "No" }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<hr />
+
+<div class="container mt-4" style="max-width: 800px">
+  <h3>Create New Task</h3>
+  <form (ngSubmit)="createToDo()">
+    <div class="row g-3">
+      <!-- Title Input -->
+      <div class="col-md-6">
+        <input
+          [(ngModel)]="Title"
+          placeholder="Enter your Wish"
+          class="form-control"
+          name="Title"
+          required
+        />
+      </div>
+
+      <!-- Description Input -->
+      <div class="col-md-6">
+        <input
+          [(ngModel)]="Description"
+          placeholder="Enter a Description"
+          class="form-control"
+          name="Description"
+        />
+      </div>
+
+      <!-- Due Date Input -->
+      <div class="col-md-6">
+        <input
+          type="date"
+          [(ngModel)]="DueDate"
+          class="form-control"
+          name="DueDate"
+        />
+      </div>
+
+      <!-- Priority Select -->
+      <div class="col-md-6">
+        <select [(ngModel)]="Priority" class="form-select" name="Priority">
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+        </select>
+      </div>
+
+      <!-- Status Select -->
+      <div class="col-md-6">
+        <select [(ngModel)]="Status" class="form-select" name="Status">
+          <option value="to-do">To Do</option>
+          <option value="in-progress">In Progress</option>
+          <option value="completed">Completed</option>
+        </select>
+      </div>
+
+      <!-- Completed Checkbox -->
+      <div class="col-md-6">
+        <div class="form-check">
+          <input
+            type="checkbox"
+            class="form-check-input"
+            id="IsCompleted"
+            name="IsCompleted"
+            [(ngModel)]="IsCompleted"
+          />
+          <label for="IsCompleted" class="form-check-label">Completed?</label>
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <div class="col-12">
+        <button type="submit" class="btn btn-primary">Add</button>
+      </div>
+    </div>
+  </form>
+</div>
