@@ -12,6 +12,12 @@ const reducer = createReducer(
   on(ToDoActions.SuccessGetToDoAction, (state: ToDoState, { payload }) => {
     return { ...state, ToDos: payload, ToDoError: null };
   }),
+  on(ToDoActions.GetHistoryAction, (state: ToDoState) => state),
+
+  on(ToDoActions.SuccessGetHistoryAction, (state: ToDoState, { id }) => {
+    const filteredToDos = state.ToDos.filter((todo) => todo._id !== id);
+    return { ...state, ToDos: filteredToDos, ToDoError: null };
+  }),
 
   on(ToDoActions.CreateToDoAction, (state: ToDoState) => state),
 
@@ -23,7 +29,7 @@ const reducer = createReducer(
 
   on(ToDoActions.SuccessUpdateToDoAction, (state: ToDoState, { payload }) => {
     const updatedToDos = state.ToDos.map((todo) =>
-      todo.id === payload.id ? payload : todo
+      todo._id === payload._id ? payload : todo
     );
     return { ...state, ToDos: updatedToDos, ToDoError: null };
   }),
@@ -31,7 +37,7 @@ const reducer = createReducer(
   on(ToDoActions.DeleteToDoAction, (state: ToDoState) => state),
 
   on(ToDoActions.SuccessDeleteToDoAction, (state: ToDoState, { id }) => {
-    const filteredToDos = state.ToDos.filter((todo) => todo.id !== id);
+    const filteredToDos = state.ToDos.filter((todo) => todo._id !== id);
     return { ...state, ToDos: filteredToDos, ToDoError: null };
   }),
 

@@ -1,5 +1,6 @@
 import { createAction, props } from '@ngrx/store';
 import ToDo from './todo.model';
+import ToDoHistory from './todo-history.model';
 
 export const GetToDoAction = createAction('[ToDo] - Get ToDo');
 
@@ -7,7 +8,14 @@ export const SuccessGetToDoAction = createAction(
   '[ToDo] - Success Get ToDo',
   props<{ payload: ToDo[] }>()
 );
-
+export const GetHistoryAction = createAction(
+  '[ToDoHistory] - Get History',
+  props<{ id: string }>()
+);
+export const SuccessGetHistoryAction = createAction(
+  '[ToDo] - Success Get History',
+  props<{ id: string }>()
+);
 export const CreateToDoAction = createAction(
   '[ToDo] - Create ToDo',
   props<{ payload: ToDo }>()

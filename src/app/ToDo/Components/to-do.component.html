@@ -1,6 +1,49 @@
-<div class="container mt-4" style="max-width: 800px">
-  <h2 class="mb-4">My Tasks:</h2>
-
+<style>
+  select,
+  input {
+    background-color: #e9e9e9;
+    color: #444;
+    color-scheme: light;
+  }
+  select {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background: #e9e9e9;
+    background-image: url("data:image/svg+xml;utf8,<svg fill='black' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
+    background-repeat: no-repeat;
+    background-position-x: 100%;
+    background-position-y: 5px;
+    border: 1px solid #444;
+    border-radius: 2px;
+    margin-right: 2rem;
+    padding-right: 2rem;
+  }
+  input:focus,
+  select:focus {
+    background-color: transparent;
+  }
+  .form-control::placeholder {
+    color: #444;
+  }
+  .form-control,
+  .form-select,
+  .form-check-input {
+    border-radius: 10px;
+    color: #444;
+    font-weight: 500;
+  }
+  .alert {
+    border-radius: 10px;
+    background-color: rgb(255, 226, 226);
+    color: rgb(190, 0, 0);
+    margin-bottom: 10px;
+  }
+  .btn-close {
+    color: #000;
+    filter: none;
+  }
+</style>
+<div class="container mt-4" style="max-width: 900px">
   <!-- Error Message -->
   <div
     *ngIf="todoError?.message"
@@ -15,43 +58,14 @@
       aria-label="Close"
     ></button>
   </div>
-
-  <!-- ToDo List Table -->
-  <table class="table table-dark table-striped table-responsive my-4">
-    <thead>
-      <tr>
-        <th scope="col">#</th>
-        <th scope="col">Name</th>
-        <th scope="col">Description</th>
-        <th scope="col">Due Date</th>
-        <th scope="col">Priority</th>
-        <th scope="col">Completed?</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let todo of ToDoList; let i = index">
-        <th scope="row">{{ i + 1 }}</th>
-        <td>{{ todo.title }}</td>
-        <td>{{ todo.description }}</td>
-        <td>{{ formatDate(todo.dueDate) }}</td>
-        <td>{{ todo.priority }}</td>
-        <td>{{ todo.isCompleted ? "Yes" : "No" }}</td>
-      </tr>
-    </tbody>
-  </table>
-</div>
-
-<hr />
-
-<div class="container mt-4" style="max-width: 800px">
-  <h3>Create New Task</h3>
-  <form (ngSubmit)="createToDo()">
+  <h2 class="mb-4">Create New Task</h2>
+  <form (ngSubmit)="createToDo()" id="form">
     <div class="row g-3">
       <!-- Title Input -->
       <div class="col-md-6">
         <input
           [(ngModel)]="Title"
-          placeholder="Enter your Wish"
+          placeholder="Enter task name"
           class="form-control"
           name="Title"
           required
@@ -62,7 +76,7 @@
       <div class="col-md-6">
         <input
           [(ngModel)]="Description"
-          placeholder="Enter a Description"
+          placeholder="Enter description"
           class="form-control"
           name="Description"
         />
@@ -72,6 +86,7 @@
       <div class="col-md-6">
         <input
           type="date"
+          placeholder="Select Due Date"
           [(ngModel)]="DueDate"
           class="form-control"
           name="DueDate"
@@ -96,24 +111,158 @@
         </select>
       </div>
 
-      <!-- Completed Checkbox -->
-      <div class="col-md-6">
-        <div class="form-check">
-          <input
-            type="checkbox"
-            class="form-check-input"
-            id="IsCompleted"
-            name="IsCompleted"
-            [(ngModel)]="IsCompleted"
-          />
-          <label for="IsCompleted" class="form-check-label">Completed?</label>
-        </div>
-      </div>
-
       <!-- Submit Button -->
       <div class="col-12">
-        <button type="submit" class="btn btn-primary">Add</button>
+        <button type="submit" class="btn btn-primary">Add Task</button>
       </div>
     </div>
   </form>
+</div>
+<hr />
+<div class="container mt-4" style="max-width: 900px">
+  <h3 class="mb-4">My Tasks:</h3>
+
+  <!-- Task List -->
+  <div class="row">
+    <div *ngFor="let todo of ToDoList" class="col-md-6 w-100">
+      <div class="card task-card">
+        <div class="card-header d-flex justify-content-between">
+          <div>{{ todo.title }}</div>
+          <div>
+            <button
+              (click)="showHistory(todo._id)"
+              class="btn btn-secondary btn-sm"
+            >
+              History
+            </button>
+            <button (click)="editToDo(todo)" class="btn btn-warning btn-sm">
+              Edit
+            </button>
+            <button
+              (click)="deleteToDo(todo._id)"
+              class="btn btn-danger btn-sm"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+        <div class="card-body pb-0 pt-2">
+          <p><strong>Description:</strong> {{ todo.description }}</p>
+          <p><strong>Due Date:</strong> {{ formatDate(todo.dueDate) }}</p>
+          <p><strong>Priority:</strong> {{ todo.priority }}</p>
+          <p><strong>Status:</strong> {{ todo.status }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Modal -->
+<div
+  class="modal fade"
+  id="editTaskModal"
+  tabindex="-1"
+  aria-labelledby="editTaskModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editTaskModalLabel">Edit Task</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+          (click)="closeModal()"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <form (ngSubmit)="createToDo()" id="form">
+          <div class="row g-3">
+            <!-- Title Input -->
+            <div class="col-md-6">
+              <input
+                [(ngModel)]="Title"
+                placeholder="Enter task name"
+                class="form-control"
+                name="Title"
+                required
+              />
+            </div>
+
+            <!-- Description Input -->
+            <div class="col-md-6">
+              <input
+                [(ngModel)]="Description"
+                placeholder="Enter description"
+                class="form-control"
+                name="Description"
+              />
+            </div>
+
+            <!-- Due Date Input -->
+            <div class="col-md-6">
+              <input
+                type="date"
+                placeholder="Select Due Date"
+                [(ngModel)]="DueDate"
+                class="form-control"
+                name="DueDate"
+              />
+            </div>
+
+            <!-- Priority Select -->
+            <div class="col-md-6">
+              <select
+                [(ngModel)]="Priority"
+                class="form-select"
+                name="Priority"
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+
+            <!-- Status Select -->
+            <div class="col-md-6">
+              <select [(ngModel)]="Status" class="form-select" name="Status">
+                <option value="to-do">To Do</option>
+                <option value="in-progress">In Progress</option>
+                <option value="completed">Completed</option>
+              </select>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="col-12">
+              <button type="submit" class="btn btn-primary">Update Task</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<div
+  class="modal fade"
+  id="historyModal"
+  tabindex="-1"
+  aria-labelledby="editTaskModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editTaskModalLabel">Task History</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+          (click)="closeHistory()"
+        ></button>
+      </div>
+      <div class="modal-body">hello</div>
+    </div>
+  </div>
 </div>

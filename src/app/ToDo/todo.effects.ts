@@ -26,7 +26,21 @@ export class ToDoEffects {
       )
     )
   );
-
+  GetToDoHistory$: Observable<Action> = createEffect(() =>
+    this.action$.pipe(
+      ofType(ToDoActions.GetHistoryAction),
+      mergeMap((action) =>
+        this.todoService.getToDoHistoryById(action.id).pipe(
+          map(() => {
+            return ToDoActions.SuccessGetHistoryAction({ id: action.id });
+          }),
+          catchError((error) => {
+            return of(ToDoActions.ErrorToDoAction({ error }));
+          })
+        )
+      )
+    )
+  );
   CreateToDos$: Observable<Action> = createEffect(() =>
     this.action$.pipe(
       ofType(ToDoActions.CreateToDoAction),
