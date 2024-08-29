@@ -5,4 +5,5 @@ export default class ToDoHistory {
   changeType: string;
   changeDetails: string;
   createdOn: Date;
+  timestamp: Date;
 }
