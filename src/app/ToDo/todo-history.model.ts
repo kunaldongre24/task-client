@@ -4,4 +4,5 @@ export default class ToDoHistory {
   id: string;
   changeType: string;
   changeDetails: string;
+  createdOn: Date;
 }

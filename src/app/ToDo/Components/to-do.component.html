@@ -28,9 +28,11 @@
   .form-control,
   .form-select,
   .form-check-input {
-    border-radius: 10px;
+    border-radius: 5px;
     color: #444;
-    font-weight: 500;
+    font-weight: 400;
+    background-color: #f9f9f9;
+    border: 1px solid #aaa;
   }
   .alert {
     border-radius: 10px;
@@ -41,6 +43,87 @@
   .btn-close {
     color: #000;
     filter: none;
+  }
+  /* General Styles */
+
+  .form-select::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    width: 10px;
+    height: 10px;
+    border-left: 2px solid #333;
+    border-bottom: 2px solid #333;
+    transform: rotate(45deg);
+    transform-origin: center;
+    pointer-events: none;
+    margin-top: -3px; /* Center the arrow vertically */
+  }
+
+  .form-select:focus {
+    border-color: #007bff;
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(38, 143, 255, 0.25);
+  }
+
+  .form-select option {
+    background-color: #fff;
+    color: #333;
+  }
+
+  .form-select-wrapper {
+    position: relative;
+    max-width: 300px;
+    margin: 0 auto;
+  }
+
+  .form-select-label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 5px;
+  }
+  .form-group {
+    margin: 20px;
+  }
+
+  .form-label {
+    display: block;
+    margin-bottom: 10px;
+    color: #333;
+    font-size: 14px;
+  }
+
+  .sort-options {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .form-field {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .form-select.filters {
+    padding: 4px 8px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    background-color: #f9f9f9;
+    font-size: 14px;
+    color: #333;
+  }
+
+  .form-select.filters:focus {
+    border-color: #007bff;
+    outline: none;
+    background-color: #fff;
+  }
+  .form-group {
+    margin: 0;
+  }
+  .form-field label {
+    margin-bottom: 5px;
   }
 </style>
 <div class="container mt-4" style="max-width: 900px">
@@ -120,8 +203,63 @@
 </div>
 <hr />
 <div class="container mt-4" style="max-width: 900px">
-  <h3 class="mb-4">My Tasks:</h3>
+  <h3 class="d-flex align-items-center justify-content-between">
+    <span>My Tasks:</span
+    ><span
+      ><div class="form-field">
+        <button (click)="downloadCSV()" class="btn-download">
+          Download CSV
+        </button>
+      </div></span
+    >
+  </h3>
+  <div class="mt-2 mb-3" style="max-width: 900px">
+    <div class="form-group d-flex align-items-center justify-content-between">
+      <label for="sortOptions" class="form-label"></label>
+      <div class="sort-options">
+        <div class="form-field">
+          <select
+            id="priority"
+            [(ngModel)]="selectedPriority"
+            (change)="sortTasks()"
+            class="form-select filters"
+          >
+            <option value="">Priority</option>
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
 
+        <div class="form-field">
+          <select
+            id="status"
+            [(ngModel)]="selectedStatus"
+            (change)="sortTasks()"
+            class="form-select filters"
+          >
+            <option value="">Status</option>
+            <option value="to-do">To Do</option>
+            <option value="in-progress">In Progress</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
+
+        <div class="form-field">
+          <select
+            id="dueDate"
+            [(ngModel)]="selectedDueDate"
+            (change)="sortTasks()"
+            class="form-select filters"
+          >
+            <option value="">Due Date</option>
+            <option value="recent">Recent First</option>
+            <option value="older">Older First</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
   <!-- Task List -->
   <div class="row">
     <div *ngFor="let todo of ToDoList" class="col-md-6 w-100">
@@ -130,7 +268,7 @@
           <div>{{ todo.title }}</div>
           <div>
             <button
-              (click)="showHistory(todo._id)"
+              (click)="showTaskHistory(todo._id)"
               class="btn btn-secondary btn-sm"
             >
               History
@@ -177,7 +315,7 @@
         ></button>
       </div>
       <div class="modal-body">
-        <form (ngSubmit)="createToDo()" id="form">
+        <form (ngSubmit)="updateToDo()" id="form">
           <div class="row g-3">
             <!-- Title Input -->
             <div class="col-md-6">
@@ -235,7 +373,14 @@
 
             <!-- Submit Button -->
             <div class="col-12">
-              <button type="submit" class="btn btn-primary">Update Task</button>
+              <button
+                type="submit"
+                class="btn btn-primary"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              >
+                Update Task
+              </button>
             </div>
           </div>
         </form>
@@ -245,24 +390,59 @@
 </div>
 <div
   class="modal fade"
-  id="historyModal"
+  id="taskHistoryModal"
   tabindex="-1"
-  aria-labelledby="editTaskModalLabel"
+  aria-labelledby="taskHistoryModalLabel"
   aria-hidden="true"
 >
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-lg">
     <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="editTaskModalLabel">Task History</h5>
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="taskHistoryModalLabel">Task History</h5>
         <button
           type="button"
           class="btn-close"
           data-bs-dismiss="modal"
           aria-label="Close"
-          (click)="closeHistory()"
         ></button>
       </div>
-      <div class="modal-body">hello</div>
+      <div class="modal-body">
+        <div *ngIf="loadingHistory" class="text-center py-3">
+          <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+
+        <div *ngIf="taskHistory$ | async as taskHistory">
+          <div *ngIf="taskHistory.length === 0" class="alert alert-info">
+            No history available for this task.
+          </div>
+
+          <div class="list-group">
+            <div
+              *ngFor="let history of taskHistory"
+              class="list-group-item rounded-3 mb-3 shadow-sm"
+              [ngClass]="{
+                'bg-success text-white': history.changeType === 'Completed',
+                'bg-warning text-dark': history.changeType === 'In Progress',
+                'bg-danger text-white': history.changeType === 'Cancelled'
+              }"
+            >
+              <div class="d-flex w-100 justify-content-between">
+                <h6 class="mb-1 text-capitalize">{{ history.changeType }}</h6>
+                <small class="text-muted">{{
+                  history.createdOn | date : "short"
+                }}</small>
+              </div>
+              <p class="mb-1">{{ history.changeDetails }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="historyError" class="alert alert-danger">
+          Error loading history. Please try again later.
+        </div>
+      </div>
     </div>
   </div>
 </div>

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { Action } from '@ngrx/store';
 import { Observable, of } from 'rxjs';
-import { catchError, map, mergeMap } from 'rxjs/operators';
+import { catchError, map, mergeMap, switchMap } from 'rxjs/operators';
 import * as ToDoActions from './todo.action';
 import { ToDoHttpService } from './todo.httpservice';
 import ToDo from './todo.model';
@@ -26,17 +26,17 @@ export class ToDoEffects {
       )
     )
   );
-  GetToDoHistory$: Observable<Action> = createEffect(() =>
+  getToDoHistory$ = createEffect(() =>
     this.action$.pipe(
-      ofType(ToDoActions.GetHistoryAction),
-      mergeMap((action) =>
-        this.todoService.getToDoHistoryById(action.id).pipe(
-          map(() => {
-            return ToDoActions.SuccessGetHistoryAction({ id: action.id });
-          }),
-          catchError((error) => {
-            return of(ToDoActions.ErrorToDoAction({ error }));
-          })
+      ofType(ToDoActions.GetToDoHistoryAction),
+      switchMap(({ id }) =>
+        this.todoService.getToDoHistoryById(id).pipe(
+          map((history) =>
+            ToDoActions.GetToDoHistorySuccessAction({ history })
+          ),
+          catchError((error) =>
+            of(ToDoActions.GetToDoHistoryFailureAction({ error }))
+          )
         )
       )
     )

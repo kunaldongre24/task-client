@@ -8,14 +8,7 @@ export const SuccessGetToDoAction = createAction(
   '[ToDo] - Success Get ToDo',
   props<{ payload: ToDo[] }>()
 );
-export const GetHistoryAction = createAction(
-  '[ToDoHistory] - Get History',
-  props<{ id: string }>()
-);
-export const SuccessGetHistoryAction = createAction(
-  '[ToDo] - Success Get History',
-  props<{ id: string }>()
-);
+
 export const CreateToDoAction = createAction(
   '[ToDo] - Create ToDo',
   props<{ payload: ToDo }>()
@@ -48,5 +41,20 @@ export const SuccessDeleteToDoAction = createAction(
 
 export const ErrorToDoAction = createAction(
   '[ToDo] - Error',
+  props<{ error: any }>()
+);
+
+export const GetToDoHistoryAction = createAction(
+  '[ToDo] Get Task History',
+  props<{ id: string }>()
+);
+
+export const GetToDoHistorySuccessAction = createAction(
+  '[ToDo] Get Task History Success',
+  props<{ history: ToDoHistory[] }>()
+);
+
+export const GetToDoHistoryFailureAction = createAction(
+  '[ToDo] Get Task History Failure',
   props<{ error: any }>()
 );

@@ -12,13 +12,6 @@ const reducer = createReducer(
   on(ToDoActions.SuccessGetToDoAction, (state: ToDoState, { payload }) => {
     return { ...state, ToDos: payload, ToDoError: null };
   }),
-  on(ToDoActions.GetHistoryAction, (state: ToDoState) => state),
-
-  on(ToDoActions.SuccessGetHistoryAction, (state: ToDoState, { id }) => {
-    const filteredToDos = state.ToDos.filter((todo) => todo._id !== id);
-    return { ...state, ToDos: filteredToDos, ToDoError: null };
-  }),
-
   on(ToDoActions.CreateToDoAction, (state: ToDoState) => state),
 
   on(ToDoActions.SuccessCreateToDoAction, (state: ToDoState, { payload }) => {
@@ -44,7 +37,22 @@ const reducer = createReducer(
   on(ToDoActions.ErrorToDoAction, (state: ToDoState, { error }) => {
     console.error('ToDo Error:', error);
     return { ...state, ToDoError: error };
-  })
+  }),
+  on(ToDoActions.GetToDoHistoryAction, (state) => ({
+    ...state,
+    loadingHistory: true,
+    historyError: null,
+  })),
+  on(ToDoActions.GetToDoHistorySuccessAction, (state, { history }) => ({
+    ...state,
+    loadingHistory: false,
+    taskHistory: history,
+  })),
+  on(ToDoActions.GetToDoHistoryFailureAction, (state, { error }) => ({
+    ...state,
+    loadingHistory: false,
+    historyError: error,
+  }))
 );
 
 export function ToDoReducer(

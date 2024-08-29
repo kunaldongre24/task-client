@@ -2,13 +2,15 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common'; // Import CommonModule
 import { Store, select } from '@ngrx/store';
-import { Observable, Subscription } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, of, Subscription } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { DatePipe } from '@angular/common';
 import * as ToDoActions from '../todo.action';
 import ToDo from '../todo.model';
 import ToDoState from '../todo.state';
+import ToDoHistory from '../todo-history.model';
 declare var bootstrap: any;
+
 @Component({
   selector: 'app-to-do',
   templateUrl: './to-do.component.html',
@@ -49,11 +51,14 @@ export class ToDoComponent implements OnInit, OnDestroy {
   IsCompleted: boolean = false;
 
   todoError: Error = null;
-
+  selectedTaskId: string = '';
+  taskHistory$: Observable<ToDoHistory[]> = new Observable();
+  loadingHistory: boolean = false;
+  historyError: boolean = false;
   // For editing
   isEditing: boolean = false;
   currentTaskId: string = '';
-  selectedTask: ToDo | null = null;
+  sortOption: 'dueDate' | 'priority' | 'status' = 'dueDate'; // Default sorting option
 
   createToDo() {
     if (this.isEditing) {
@@ -95,17 +100,16 @@ export class ToDoComponent implements OnInit, OnDestroy {
       _id: this.currentTaskId,
       title: this.Title,
       description: this.Description,
-      dueDate: this.DueDate,
+      dueDate: new Date(this.DueDate),
       priority: this.Priority,
       status: this.Status,
       isCompleted: this.IsCompleted,
       id: this.currentTaskId,
     };
     this.store.dispatch(ToDoActions.UpdateToDoAction({ payload: updatedTodo }));
+    this.closeModal();
     this.isEditing = false;
     this.currentTaskId = '';
-    this.resetForm();
-    this.closeModal();
   }
 
   deleteToDo(id: string) {
@@ -123,6 +127,33 @@ export class ToDoComponent implements OnInit, OnDestroy {
     this.currentTaskId = '';
   }
 
+  showTaskHistory(taskId: string) {
+    this.selectedTaskId = taskId;
+    this.loadingHistory = true;
+    this.historyError = false;
+    this.store.dispatch(ToDoActions.GetToDoHistoryAction({ id: taskId }));
+
+    this.taskHistory$ = this.store.pipe(
+      select((state) => state.todos.taskHistory),
+      map((history) =>
+        history.filter((entry) => entry.taskId === this.selectedTaskId)
+      ),
+      catchError(() => {
+        this.loadingHistory = false;
+        this.historyError = true;
+        return of([]); // Return an empty array on error
+      })
+    );
+
+    this.taskHistory$.subscribe(() => (this.loadingHistory = false)); // Update loading state after data is loaded
+
+    // Open the modal
+    const modal = new bootstrap.Modal(
+      document.getElementById('taskHistoryModal')
+    );
+    modal.show();
+  }
+
   ngOnDestroy() {
     if (this.ToDoSubscription) {
       this.ToDoSubscription.unsubscribe();
@@ -135,16 +166,76 @@ export class ToDoComponent implements OnInit, OnDestroy {
 
   closeModal() {
     const modal = new bootstrap.Modal(document.getElementById('editTaskModal'));
-    this.resetForm();
     modal.hide();
   }
-  showHistory(id: string) {
-    this.store.dispatch(ToDoActions.GetHistoryAction({ id }));
-    const modal = new bootstrap.Modal(document.getElementById('historyModal'));
-    modal.show();
+
+  // Example of a sortTasks method in your Angular component
+  selectedPriority: string = '';
+  selectedStatus: string = '';
+  selectedDueDate: string = '';
+  sortTasks() {
+    // Create a copy of the ToDoList
+    const sortedList = [...this.ToDoList];
+
+    // Filter by priority
+    if (this.selectedPriority) {
+      sortedList.sort((a, b) =>
+        a.priority === this.selectedPriority ? -1 : 1
+      );
+    }
+
+    // Filter by status
+    if (this.selectedStatus) {
+      sortedList.sort((a, b) => (a.status === this.selectedStatus ? -1 : 1));
+    }
+
+    // Sort by due date
+    if (this.selectedDueDate) {
+      sortedList.sort((a, b) => {
+        const dateA = new Date(a.dueDate).getTime();
+        const dateB = new Date(b.dueDate).getTime();
+
+        return this.selectedDueDate === 'recent'
+          ? dateB - dateA
+          : dateA - dateB;
+      });
+    }
+
+    this.ToDoList = sortedList;
   }
-  closeHistory() {
-    const modal = new bootstrap.Modal(document.getElementById('historyModal'));
-    modal.hide();
+  downloadCSV() {
+    const csvRows = [];
+    const headers = [
+      'Task Name',
+      'Description',
+      'Priority',
+      'Status',
+      'Due Date',
+    ];
+    csvRows.push(headers.join(','));
+
+    this.ToDoList.forEach((task) => {
+      const values = [
+        task.title,
+        task.description,
+        task.priority,
+        task.status,
+        task.dueDate,
+      ];
+      csvRows.push(values.join(','));
+    });
+
+    const csvData = new Blob([csvRows.join('\n')], {
+      type: 'text/csv;charset=utf-8;',
+    });
+    const csvUrl = URL.createObjectURL(csvData);
+
+    // Create a link element and trigger download
+    const link = document.createElement('a');
+    link.href = csvUrl;
+    link.setAttribute('download', 'tasks.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 }
